@@ -1,0 +1,111 @@
+seed: 7
+device: cuda:1
+proj_device: cpu
+dtype: float32
+R: 1
+ensemble:
+  agg: mean
+  use_stability: false
+  min_presence_frac: 0.6
+output:
+  out_dir: /media/zeiler/extend_4T/CCC/outputs_ccc/Xenium5k_Human_Ovary_Cancer_fig3
+  run_name: node_embed_ssl
+  save_checkpoints: true
+  save_edge_attrs4: true
+  save_npz: true
+  keep_top_percent: 20.0   # keep top X% edges globally by score_final
+  min_keep: 1              # only used if use_min_keep=true
+  max_keep: 1000000000     # safety cap
+  use_min_keep: false
+dataset:
+  dataset_id: Xenium5k_Human_Ovary_Cancer
+  root: /media/zeiler/extend_4T/CCC/data/Xenium5k_Human_Ovary_Cancer_fig3
+  sample_idx: 0
+  mpp: 0.5
+  neighborhood_um: 300.0
+  quantile_norm: true
+  active_percentile: 98
+  cache_graph: true
+  sample_id: 'sample1'
+causal:
+  enabled: true
+  tile_size_px: 1536
+  global_he_path: '/media/zeiler/extend_4T/CCC/data/Xenium5k_Human_Ovary_Cancer_fig3/sample1/HE_global.npy'    # optional: pre-built global HE mosaic (.npy/.npz). If empty, will stitch neighbors.
+  hf_model_id: prov-gigapath/prov-gigapath
+  timm_prefix: 'hf-hub:'
+  encoder_input_size: 224
+  normalize_imagenet: true
+  finetune_encoder: false
+  enc_out_dim: 1536
+  z_proj_dim: 16
+  h_proj_dim: 16
+  shrinkage: 0.001
+  min_edges_per_lr: 20
+  cmi_clip_percentiles:
+  - 1.0
+  - 99.0
+  return_debug: false
+  cluster_target: 15
+  cluster_max: 25
+  cluster_knn: 20
+  cluster_max_edge_dist_px: 120.0
+  patch_size_px: 100
+  patch_batch_size: 64
+  local_um: 250.0
+  global_um: 1000.0
+  # NEW: per-cell (node) HE patch size for H_i and z list (square crop around centroid)
+  node_patch_um: 80.0
+  global_center_fallback: repeat
+  local_global_ridge: 0.001
+node_embedding:
+  enabled: true
+  finetune_he_encoder: true
+  precompute_he_embedding_if_frozen: true
+  hf_model_id: prov-gigapath/prov-gigapath
+  timm_prefix: 'hf-hub:'
+  encoder_input_size: 224
+  normalize_imagenet: true
+  enc_out_dim: 1536
+  he_patch_um: 40.0
+  he_patch_size_px: null
+  he_batch_size: 128
+  st_hidden: 256
+  st_out_dim: 128
+  st_num_layers: 2
+  st_dropout: 0.1
+  st_batch_size: 256
+model:
+  hidden_dim: 256
+  out_dim: 128
+  num_layers: 2
+  num_heads: 4
+  lr_embed_dim: 32
+  edge_mlp_hidden: 64
+  edge_bias_dim: 32
+  dropout: 0.2
+  add_coords: false
+  dist_sigma: 120.0
+  coexpr_log1p: true
+  coexpr_scale: 10.0
+  temperature: 1.0
+train:
+  epochs: 400
+  lr: 0.001
+  weight_decay: 0.0001
+  grad_clip: 5.0
+  print_every: 25
+ssl:
+  dec_chunk_size: 50000        # 先用 50k，稳了再逐步加大（100k/200k）
+  mask_detach_encoder: true    # 默认 true（关键）
+  eval_edge_threshold: 400000
+  cons_num_edges: 8192         # consistency 只在子集边上算
+  num_mask_edges: 2048
+  mask_weight: 10.0
+  beta_rank: 0.1
+  gamma_cons: 10.0
+  num_rank_pairs: 1024
+  dec_hidden: 128
+  dec_dropout: 0.2
+  dec_lr_embed_dim: 32
+  dec_use_coexpr: false
+  dec_use_causal: false
